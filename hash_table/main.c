@@ -2,14 +2,17 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <string.h>
+#include <limits.h>
 
 /* Programa no qual se implementa uma Tabela Hash cujo tratamento de colisões é Sondagem Linear */
 
 // Elemento em si
 typedef struct elemento
 {
+   char tipo[10];
    int valor;
-   int chave;
+   long chave;
    char nome[100];
 }elem;
 
@@ -22,20 +25,28 @@ typedef struct elemento_tabela
 
 /* Definição de um tamanho para a tabela, uma quantidade máxima de posições e um ponteiro para a estrutura elemento_tabela*/
 int tam = 0;
-int max = 10;
+int max = 15;
 elem_hash *vetor;
 
-int Gera_chave(int valor)
+long Gera_chave(char name[100])
 {
-  int chave = valor * pow(11, valor % 4);
+  long chave = 0;
+  int carac_asc = 0;
+  for (int e = 0; e < strlen(name); e++)
+    {
+      carac_asc = name[e];
+      chave += carac_asc * pow(10, e);
+    }
   return chave;
 }
+
 // Função utilizada para calcular o código hash do elemento
 int Cod_hash(int chave)
 {
   int ind = chave % max;
   return ind;
 }
+
 
 /* Função responsável por inicializar o vetor com posições nulas */
 void Inicializar_vet()
@@ -49,21 +60,21 @@ void Inicializar_vet()
 }
 
 /* Função responsável por inserir um elemento*/
-void Inserir(int val)
+void hash_insert(char name[100], char type[10], int val)
 {
-  int index = Cod_hash(Gera_chave(val));
+  int index = Cod_hash(Gera_chave(name));
+  
   int n_ind = index;
   
-
   elem *n_elem = malloc(sizeof(elem));
   n_elem -> valor = val;
-  n_elem -> chave = Gera_chave(val);
-  printf("\nInsira o nome do elemento de valor %d:\n", val);
-  scanf("%s", n_elem -> nome);
+  n_elem -> chave = Gera_chave(name);
+  strncpy(n_elem -> nome, name, 100);
+  strncpy(n_elem -> tipo, type, 10);
 
   while (vetor[n_ind].sinal == 1)
     {
-      if (vetor[n_ind].dados -> chave == Gera_chave(val))
+      if (vetor[n_ind].dados -> chave == Gera_chave(name))
       {
         vetor[n_ind].dados -> valor = val;
         printf("\nChave já utilizada anteriormente. Valor foi atualizado\n");
@@ -81,25 +92,25 @@ void Inserir(int val)
   vetor[n_ind].sinal = 1;
   vetor[n_ind].dados = n_elem;
   tam++;
-  printf("\nInserção da chave %d realizada\n",Gera_chave(val));
+  printf("\nInserção da chave %d realizada\n",Gera_chave(name));
   
 }
 
 /* Função responsável por inserir um elemento cuja chave é a mesma do parâmetro recebido */
-void Remover(int val)
+void Remover(char name[100])
 {
-  int index = Cod_hash(Gera_chave(val));
+  int index = Cod_hash(Gera_chave(name));
   int n_ind = index;
 
   while (vetor[n_ind].sinal != 0)
     {
 
-      if (vetor[n_ind].sinal == 1 && vetor[n_ind].dados -> chave == Gera_chave(val))
+      if (vetor[n_ind].sinal == 1 && vetor[n_ind].dados -> chave == Gera_chave(name))
       {
         vetor[n_ind].sinal = 2;
         vetor[n_ind].dados = NULL;
         tam--;
-        printf("\n Valor %d foi removido\n", val);
+        printf("\n %s foi removido\n", name);
         return;
       }
 
@@ -115,16 +126,16 @@ void Remover(int val)
 }
 
 
-elem * Buscar(int val)
+elem * Buscar(char name[100])
 {
-  int index = Cod_hash(Gera_chave(val));
+  int index = Cod_hash(Gera_chave(name));
   int n_ind = index;
   elem * found;
 
   while (vetor[n_ind].sinal != 0)
     {
 
-      if (vetor[n_ind].sinal == 1 && vetor[n_ind].dados -> chave == Gera_chave(val))
+      if (vetor[n_ind].sinal == 1 && vetor[n_ind].dados -> chave == Gera_chave(name))
       {
         found = vetor[n_ind].dados;
         return found;
@@ -145,12 +156,14 @@ elem * Buscar(int val)
 
 /* Função responsável pela impressão da Tabela Hash */
 
-void Imprimir()
+void hash_print()
 {
+  printf("\n");
+  printf("---------------Tabela Hash---------------");
+  printf("\n");
   for (int e = 0; e < max; e++)
     {
       elem *atual = vetor[e].dados;
-
       if (atual != NULL)
       {
         printf("\nVetor: Elem %d, chave = %d, valor = %d", e, atual -> chave, atual -> valor);
@@ -158,6 +171,11 @@ void Imprimir()
         for (int i = 0; i < 100; i++)
           {
             printf("%c", atual -> nome[i]);
+          }
+        printf(", tipo = ");
+        for (int i = 0; i < 10; i++)
+          {
+            printf("%c", atual -> tipo[i]);
           }
         printf("\n");
       }
@@ -170,211 +188,72 @@ void Imprimir()
     }
 }
 
-elem * BuscaNom(char nom[100])
+elem * hash_get_elem(char name[100])
 {
-  bool equal;
-  for (int e = 0; e < max; e++)
-    {
-      elem *atual = vetor[e].dados;
-      equal = true;
-      
-      if (atual != NULL)
-      {
-        for (int i = 0; i < 10; i++)
-          {
-            if (nom[i] == 0)
-              break;
-            if (nom[i] != atual -> nome[i])
-            {
-              equal = false;
-            }
-          }
-      }
-      if (equal == true)
-        return atual;
-    }
+  int index = Cod_hash(Gera_chave(name));
+  elem * atual = vetor[index].dados;
+  if (atual != NULL)
+    return atual;
+  
   return NULL;
 }
 
-/* Função através da qual determinados
-   valores no arquivo-texto serão lidos
-   e retornados*/
-void Scrapping (int acao, int linha)
+int hash_get(char nom[100])
 {
-  int as_num, valor, ind = 0, n_line = 0;
-  FILE *pt_file;
-  char carac, ch[5];
-  bool is_creating = false, is_scraping = false;
-  
-  pt_file = fopen("dados.txt","r");
-    do
-  {  
-      carac = fgetc(pt_file);
-      // Trecho que possibilita a leitura
-      //  e utilização de dados de uma determinada
-      // linha 
-
-      if (n_line == linha - 1)
+  int index = Cod_hash(Gera_chave(nom));
+  long carac_asc, carac_aux;
+  elem * atual = vetor[index].dados;
+  if (atual ==  NULL)
+  {
+    printf("Nome inexistente na tabela\n"
+          "Variável recebe INT_MIN\n\n");
+        return INT_MIN;
+  }
+  for (int e = 0; e < strlen(nom); e++)
+    {
+      carac_asc = nom[e];
+      carac_aux = atual->nome[e];
+      if (carac_asc != carac_aux)
       {
-      if (is_creating == false)
-      { 
-        // Inicio da análise do tipo de cada caracter
-        if (carac == (48 + acao))
-      {
-        is_creating = true;
-        continue;
-      }
+        printf("Nome inexistente na tabela\n"
+          "Variável recebe INT_MIN\n\n");
+        return INT_MIN;
         }
-        
-      else 
-      {
-        as_num = carac;
-      }
-
-      // Trecho que lê caracteres numéricos e armazena em vetor
-      if (48 <= as_num && as_num <= 57)
-      { 
-        ch[ind] = as_num;
-        ind++;
-      }
-        
-      else 
-      {
-        if (as_num == 40)
-        {
-          is_scraping = true;
-        }
-
-        if (is_scraping == true)
-        {
-          // Conversão do número de char para int
-          if (as_num == 32)
-        {
-          valor = atoi(ch);
-          if (acao == 1)
-          {
-            Inserir(valor);
-          }
-          else if (acao == 2)
-            Remover(valor);
-          ind = 0;
-          for (int e = 0; e < 5; e++)
-         {
-           ch[e] = 0;
-         }
-        }
-        
-        else if (as_num == 41)
-        {
-          valor = atoi(ch);
-          is_scraping = false;
-          is_creating = false;
-          if (acao == 1)
-            Inserir(valor);
-          else if (acao == 2)
-            Remover(valor);
-          break;
-          }
-        }
-        }
-        }
-
-    else if (carac == 10)
-      n_line++;
-        
     }
-  while (carac != EOF);
-
-   fclose(pt_file);
+  return atual->valor;
 }
 
-int main(void) {
-
-  // Display de opções
-  int opcao, val, cha, buscado_val;
-  char buscado_nom[100];
-  printf("        Tabela Hash(Sondagem linear para tratamento de colisões)\n");
-  printf("\nInsira:\n"
-    "0 para sair\n"
-    "1 para inicializar tabela hash de 10 elementos\n");
-  scanf("%d", &opcao);
-
-  while (1)
-  {
-    
-  if (opcao == 0)
-    return 0;
-
-  else if (opcao == 1)
-  {
-    vetor = (elem_hash*) malloc(max * sizeof(elem_hash));
-    Inicializar_vet();
-    printf("\n Tabela Hash inicializada\n");
-    while (1)
-    {
-      // Segundo display de opções
-      printf("\nInsira:\n"
-        "0 para sair\n"
-        "1 para inserir elementos do arquivo\n"
-        "2 para remover elementos referenciados\n"
-        "3 para imprimir tabela\n"
-        "4 para buscar elemento pelo valor\n"
-        "5 para buscar elemento pelo nome\n");
-      scanf("%d", &opcao);
-      
-      if (opcao == 0)
-        return 0;
-
-      else if (opcao == 1)
-      {
-        //printf("Digite o valor a inserir:\n");
-        //scanf("%d", &val);
-        Scrapping(1, 1);
-      }
-
-      else if (opcao == 2)
-      {
-        Scrapping(2, 4);
-      }
-
-      else if(opcao == 3)
-        Imprimir();
-
-      else if (opcao == 4)
-      {
-        printf("\nDigite o valor a buscar:\n");
-        scanf("%d", &buscado_val);
-        printf("\nO nome do valor encontrado é:\n");
-        for (int i = 0; i < 100; i++)
-          {
-            printf("%c", Buscar(buscado_val) -> nome[i]);
-          }
-        printf("\n");
-      }
-        
-      else if (opcao == 5)
-      {
-        printf("\nDigite o nome a buscar:\n");
-        scanf("%s", buscado_nom);
-        printf("\nO valor do nome encontrado é %d:\n", BuscaNom(buscado_nom) -> valor);
-
-      }
-
-      else
-      {
-        printf("\nInsira uma opção válida");
-        continue;
-      }
-        
-    }
-  }
-
+void hash_update(char name[100], int val)
+{
+  int x = hash_get(name);
+  
+  if (x == INT_MIN)
+    printf("Não foi possível atualizar, nome inexistente na tabela\n\n");
   else
-  {
-    printf("\nInsira uma opção válida\n");
-    continue;
-  }
-    
-  }
+    vetor[Cod_hash(Gera_chave(name))].dados->valor = val;
+}
+
+
+int main(void) {
+  int x, y, z;
+  
+  vetor = (elem_hash*) malloc(max * sizeof(elem_hash));
+  Inicializar_vet();
+  
+  hash_insert("rock", "int", 10);
+  hash_insert("samba", "int", 50);
+  hash_insert("reggae", "int",160);
+  hash_insert("pop", "int", 38);
+  hash_print();
+  hash_update("samba", 15);
+  hash_print();
+  x = hash_get("rock");
+  y = hash_get("reggae");
+  z = x + y;
+  
+  hash_update("regga", z);
+  hash_print();
+ 
+  free(vetor);
   
 }
