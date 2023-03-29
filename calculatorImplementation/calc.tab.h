@@ -62,7 +62,9 @@ extern int yydebug;
     TIMES = 263,                   /* TIMES  */
     P_LEFT = 264,                  /* P_LEFT  */
     P_RIGHT = 265,                 /* P_RIGHT  */
-    ATRIBUTION = 266               /* ATRIBUTION  */
+    ATRIBUTION = 266,              /* ATRIBUTION  */
+    VAR = 267,                     /* VAR  */
+    PRINT_FUNCTION = 268           /* PRINT_FUNCTION  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif

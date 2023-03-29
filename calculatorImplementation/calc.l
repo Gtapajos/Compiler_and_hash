@@ -21,7 +21,9 @@ void yyerror(char *s);
 [*]					{ return TIMES; }
 [(]					{ return P_LEFT;}
 [)]					{ return P_RIGHT;}
-([A-Za-z][ ][=])      {return ATRIBUTION;}
+([A-Za-z_][A-Z_0-9a-z]*[ ][=])      {return ATRIBUTION;}
+("var"[ ][A-Za-z_][A-Z_0-9a-z]*[:][ ]("real"|"int"))             {return VAR;}
+("print"[(][A-Za-z_][A-Z_0-9a-z]*[)])    {return PRINT_FUNCTION;}
 [[:space:]]			;
 .					{ yyerror("Undefined token\n"); }
 
